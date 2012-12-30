@@ -1,3 +1,10 @@
+Google App Engine wxLauncher for GNOME
+
+Store authname and password in GNOME keyring. Require gnomekeyring
+(sudo apt-get python-gnomekeyring)
+
+----------------------------------------------------------------------
+
 Google App Engine wxLauncher
 http://code.google.com/p/google-appengine-wx-launcher
 http://code.google.com/appengine
