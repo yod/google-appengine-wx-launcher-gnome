@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Edit: 12/29/2012 (yod) Add check for gnomekeyring
+#
 
 """Convenience wrapper for starting the launcher."""
 
@@ -32,12 +34,19 @@ if CURRENT_WX_VERSION != REQUIRED_WX_VERSION:
                        (CURRENT_WX_VERSION + REQUIRED_WX_VERSION))
   sys.exit(2)
 
+try:
+  import gnomekeyring
+except ImportError:
+  print >>sys.stderr, 'gnomekeyring is not available'
+  sys.exit(1)
+
+
 import launcher
 
 if __name__ == '__main__':
   # For Linux/Mac, redirect=False gives me a stack trace on the command line.
   # TODO(jrg): remove when not debugging
   redirect = False
-  
+
   app = launcher.App(redirect=redirect)
   app.MainLoop()

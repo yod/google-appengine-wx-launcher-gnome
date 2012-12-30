@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Edit: 12/29/2012 (yod) Store authname/password in GNOME keyring
+#
 
 """Deployment controller for the launcher.
 
@@ -30,6 +32,7 @@ application, or sending it off to be run on Google infrastructure.
 """
 
 
+import gnomekeyring as gk
 import logging
 import os
 import wx
@@ -56,6 +59,8 @@ class DeployController(dialog_controller_base.DialogControllerBase):
     self._project_list = project_list
     self._authname = None
     self._password = None
+    # For Gnome Keyring
+    self._gkAttr = {'application':'Google App Engine Launcher GNOME'}
     # Dictionaries of frames and threads indexed by project.  A "text
     # frame" is the textual output window (wx.Frame) for the
     # deployment, like a Console window for a running project.
@@ -87,10 +92,26 @@ class DeployController(dialog_controller_base.DialogControllerBase):
       self._DoDeploy()  # async
     return name_pass_return
 
+  def _GetDataFromKeyring(self):
+    """Get authname and password from GNOME keyring"""
+    authname = ""
+    password = ""
+    try:
+      items = gk.find_items_sync(gk.ITEM_NETWORK_PASSWORD, self._gkAttr)
+      authname = items[0].attributes["user"]
+      password = items[0].secret
+    except gk.NoMatchError:
+      pass
+
+    return [authname, password]
+
   def _ConfigureDialog(self):
     """Configure our dialog in ways we can't do in wxGlade."""
     self.dialog.Centre()  # Not a typo; wx uses UK spelling
     self.dialog.ok_button.SetDefault()
+    [authname, password] = self._GetDataFromKeyring()
+    self.dialog.name_text_ctrl.SetValue(authname)
+    self.dialog.password_text_ctrl.SetValue(password)
     self._AddDeployServerToTextField(self.dialog.deploy_description)
 
   def _AddDeployServerToTextField(self, text_field):
@@ -111,7 +132,7 @@ class DeployController(dialog_controller_base.DialogControllerBase):
     """Display a modal dialog asking for a name and password.
 
     This info is used for login when deploying the applications; it is
-    never saved anywhere.
+    saved in GNOME keyring.
 
     Returns:
       wx.ID_OK or wx.ID_CANCEL
@@ -119,8 +140,20 @@ class DeployController(dialog_controller_base.DialogControllerBase):
     self._ConfigureDialog()
     rtn = self.dialog.ShowModal()
     if rtn == wx.ID_OK:
-      self._authname = self.dialog.name_text_ctrl.GetValue()
+      self._authname = str(self.dialog.name_text_ctrl.GetValue())
       self._password = self.dialog.password_text_ctrl.GetValue()
+      # Store information in keyring
+      try:
+        items = gk.find_items_sync(gk.ITEM_NETWORK_PASSWORD, self._gkAttr)
+        for item in items:
+          if item.attributes["user"] != self._authname:
+            gk.item_delete_sync('login', item.item_id)
+      except gk.NoMatchError:
+        pass
+
+      self._gkAttr["user"] = self._authname
+      gk.item_create_sync('login', gk.ITEM_NETWORK_PASSWORD, 'Google App Engine Credentials', self._gkAttr, self._password, True)
+
     return rtn
 
   def _TextFrameForProject(self, project):
