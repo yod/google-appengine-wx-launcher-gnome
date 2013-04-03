@@ -122,7 +122,6 @@ class Runtime(object):
                                dev_appserver)
     command = ([python_path,
                 dev_appserver,
-               '--admin_console_server=',
                '--port=%s' % project.port] +
                project.flags +
                (extra_flags or []) +

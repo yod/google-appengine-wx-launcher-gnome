@@ -95,7 +95,7 @@ class TaskThread(threading.Thread):
       True if the line is a special line that indicates that the subprocess
       as started.  False otherwise.
     """
-    if re.match('.*Running application.*http://[^:]+:[0-9]+', line):
+    if re.match('.*Starting admin server at:.*http://[^:]+:[0-9]+', line):
       return True
     return False
 
