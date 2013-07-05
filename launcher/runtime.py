@@ -122,7 +122,8 @@ class Runtime(object):
                                dev_appserver)
     command = ([python_path,
                 dev_appserver,
-               '--port=%s' % project.port] +
+               '--port=%s' % project.port,
+                '--skip_sdk_update_check=yes'] +
                project.flags +
                (extra_flags or []) +
                [project.path])
